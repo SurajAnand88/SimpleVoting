@@ -30,6 +30,8 @@ contract SimpleVoting is Ownable, IVoting {
     mapping(address => bool) public hasVoted;
 
     function addCandidate(address _addr, string memory _name) public onlyOwner {
+        require(bytes(_name).length > 0, "Invalid Name");
+        require(_addr != address(0));
         require(!candidateIndex[_addr].isAvailable, "Already Registered");
         candidates.push(Candidate(_name, 0, _addr));
         emit CandidateAdded(_name);
@@ -67,5 +69,14 @@ contract SimpleVoting is Ownable, IVoting {
     function announceWinner() public onlyOwner {
         address winner = getWinner();
         emit Winner(winner, candidates[candidateIndex[winner].index].name);
+    }
+
+    function getCandidateInfo(address _candidate)
+        public
+        view
+        returns (string memory name, uint256 voteCount, address addr)
+    {
+        Candidate memory candidate = candidates[candidateIndex[_candidate].index];
+        return (candidate.name, candidate.voteCount, candidate.addr);
     }
 }
