@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import {Ownable} from "./Ownable.sol";
 import {IVoting} from "./IVoting.sol";
 import {SafeVoteMath} from "./SafeVoteMath.sol";
+import {console} from "forge-std/Test.sol";
 
 contract SimpleVoting is Ownable, IVoting {
     using SafeVoteMath for uint256;
@@ -25,9 +26,11 @@ contract SimpleVoting is Ownable, IVoting {
         bool isAvailable;
     }
 
+    address public latestWinner;
     Candidate[] public candidates;
     mapping(address => CandidateIndexAndAvailbility) public candidateIndex;
     mapping(address => bool) public hasVoted;
+    mapping(address => uint256) public roundWinner;
 
     function addCandidate(address _addr, string memory _name) public onlyOwner {
         require(bytes(_name).length > 0, "Invalid Name");
@@ -45,7 +48,7 @@ contract SimpleVoting is Ownable, IVoting {
         emit VotedToCandidate(msg.sender, _candidateAddr);
     }
 
-    function getWinner() public view onlyOwner returns (address winner) {
+    function getWinner() public onlyOwner returns (address winner) {
         require(candidates.length > 0, "Not Enough Candidates to Count the Vote");
         uint256 maxVote = 0;
         for (uint256 i = 0; i < candidates.length; i++) {
@@ -55,15 +58,12 @@ contract SimpleVoting is Ownable, IVoting {
             }
         }
         assert(maxVote > 0);
+        latestWinner = winner;
         return winner;
     }
 
     function getContractType() public pure override returns (string memory) {
         return "Voting";
-    }
-
-    function getPublicWinner() public view returns (address) {
-        return getWinner();
     }
 
     function announceWinner() public onlyOwner {
